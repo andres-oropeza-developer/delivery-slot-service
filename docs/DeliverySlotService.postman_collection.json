@@ -1,0 +1,668 @@
+{
+  "info": {
+    "name": "Delivery Slot Service API",
+    "description": "Colección completa para probar el Delivery Slot Service — Walmart Chile",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "zone_id",
+      "value": "z-rm-norte",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reservation_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "wzc_id",
+      "value": "wzc-06",
+      "type": "string"
+    },
+    {
+      "key": "commune_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Comunas",
+      "item": [
+        {
+          "name": "GET Buscar comunas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Array con resultados\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.be.an(\"array\");",
+                  "    if (body.length > 0) {",
+                  "        pm.collectionVariables.set(\"commune_id\", body[0].id);",
+                  "        pm.collectionVariables.set(\"zone_id\", body[0].zoneId);",
+                  "        console.log(\"commune_id guardado:\", body[0].id, body[0].name);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/communes/search?q=provi",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "communes",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "provi"
+                }
+              ]
+            },
+            "description": "Busca comunas por nombre parcial. Guarda commune_id y zone_id automáticamente."
+          }
+        },
+        {
+          "name": "GET Buscar Las Condes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/communes/search?q=las+condes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "communes",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "las condes"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Zonas",
+      "item": [
+        {
+          "name": "GET Listar todas las zonas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Es un array', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.be.an('array');",
+                  "    pm.expect(body.length).to.be.greaterThan(0);",
+                  "    console.log('Zonas disponibles:', body.map(z => z.id + ' - ' + z.name).join(', '));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/zones",
+            "description": "Retorna todas las zonas activas. Usa el 'id' de una zona para el siguiente paso."
+          }
+        },
+        {
+          "name": "GET Zona por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Tiene id y name', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('id');",
+                  "    pm.expect(body).to.have.property('name');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/zones/{{zone_id}}",
+            "description": "Retorna una zona específica. Cambia la variable zone_id si quieres otra zona."
+          }
+        },
+        {
+          "name": "GET Zona inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/zones/zona-que-no-existe",
+            "description": "Prueba el manejo de errores — debe retornar 404."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Ventanas disponibles",
+      "item": [
+        {
+          "name": "GET Ventanas RM Norte - próxima semana",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Es un array de ventanas', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.be.an('array');",
+                  "    if (body.length > 0) {",
+                  "        const first = body[0];",
+                  "        pm.expect(first).to.have.property('windowZoneCapacityId');",
+                  "        pm.expect(first).to.have.property('availableSlots');",
+                  "        pm.expect(first).to.have.property('cost');",
+                  "        // Guarda el wzc_id del primer resultado disponible",
+                  "        const available = body.find(w => w.available);",
+                  "        if (available) {",
+                  "            pm.collectionVariables.set('wzc_id', available.windowZoneCapacityId);",
+                  "            console.log('wzc_id guardado:', available.windowZoneCapacityId);",
+                  "        }",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/windows?zoneId=z-rm-norte&from=2026-02-01&to=2026-02-07",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "windows"
+              ],
+              "query": [
+                {
+                  "key": "zoneId",
+                  "value": "z-rm-norte"
+                },
+                {
+                  "key": "from",
+                  "value": "2026-02-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-02-07"
+                }
+              ]
+            },
+            "description": "Lista ventanas disponibles para RM Norte entre el 1 y 7 de febrero.\n\nEl test guarda automáticamente el wzc_id de la primera ventana disponible en la variable de colección."
+          }
+        },
+        {
+          "name": "GET Ventanas RM Oriente",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/windows?zoneId=z-rm-oriente&from=2026-02-01&to=2026-02-07",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "windows"
+              ],
+              "query": [
+                {
+                  "key": "zoneId",
+                  "value": "z-rm-oriente"
+                },
+                {
+                  "key": "from",
+                  "value": "2026-02-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-02-07"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Ventanas zona inválida (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Mensaje de error', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/windows?zoneId=zona-falsa&from=2026-02-01&to=2026-02-07",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "windows"
+              ],
+              "query": [
+                {
+                  "key": "zoneId",
+                  "value": "zona-falsa"
+                },
+                {
+                  "key": "from",
+                  "value": "2026-02-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-02-07"
+                }
+              ]
+            },
+            "description": "Debe retornar 404 cuando la zona no existe."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Órdenes",
+      "item": [
+        {
+          "name": "POST Crear orden",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Orden creada correctamente', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('id');",
+                  "    pm.expect(body.status).to.eql('PENDING');",
+                  "    pm.expect(body).to.have.property('zoneName');",
+                  "    // Guarda el order_id para el siguiente paso",
+                  "    pm.collectionVariables.set('order_id', body.id);",
+                  "    console.log('order_id guardado:', body.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"cu-01\",\n  \"deliveryAddress\": \"Av. Recoleta 1234, Depto 5\",\n  \"communeId\": \"c-005\"\n}"
+            },
+            "description": "Crea una nueva orden para el cliente cu-01 en la comuna c-005 (Recoleta).\n\nEl test guarda automáticamente el order_id en la variable de colección."
+          }
+        },
+        {
+          "name": "POST Crear orden - validación (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Tiene detalles de validación', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('details');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"\",\n  \"deliveryAddress\": \"\"\n}"
+            },
+            "description": "Prueba validaciones — debe retornar 400 con detalles de los campos inválidos."
+          }
+        },
+        {
+          "name": "GET Orden por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Tiene zoneName', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('zoneName');",
+                  "    pm.expect(body).to.have.property('communeId');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/orders/{{order_id}}",
+            "description": "Obtiene la orden recién creada. Usa la variable order_id guardada en el paso anterior."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Reservas",
+      "item": [
+        {
+          "name": "POST Crear reserva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Reserva confirmada', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('id');",
+                  "    pm.expect(body.status).to.eql('CONFIRMED');",
+                  "    pm.expect(body.orderId).to.eql(pm.collectionVariables.get('order_id'));",
+                  "    // Guarda el reservation_id",
+                  "    pm.collectionVariables.set('reservation_id', body.id);",
+                  "    console.log('reservation_id guardado:', body.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/reservations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{order_id}}\",\n  \"windowZoneCapacityId\": \"{{wzc_id}}\"\n}"
+            },
+            "description": "Crea una reserva usando el order_id y wzc_id guardados automáticamente.\n\nAquí es donde ocurre el locking pesimista — si dos requests llegan al mismo tiempo, solo una gana."
+          }
+        },
+        {
+          "name": "POST Crear reserva duplicada (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Mensaje de conflicto', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql(409);",
+                  "    console.log('Error esperado:', body.message);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/reservations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{order_id}}\",\n  \"windowZoneCapacityId\": \"{{wzc_id}}\"\n}"
+            },
+            "description": "Intenta reservar la misma orden dos veces — debe retornar 409 Conflict."
+          }
+        },
+        {
+          "name": "GET Reserva por orden",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Reserva confirmada', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql('CONFIRMED');",
+                  "    pm.expect(body).to.have.property('reservedAt');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/reservations/by-order/{{order_id}}",
+            "description": "Consulta la reserva asociada a una orden."
+          }
+        },
+        {
+          "name": "DELETE Cancelar reserva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Reserva cancelada', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql('CANCELLED');",
+                  "    pm.expect(body).to.have.property('cancelledAt');",
+                  "    pm.expect(body.cancellationReason).to.eql('Cambio de planes');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/reservations/{{reservation_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Cambio de planes\"\n}"
+            },
+            "description": "Cancela la reserva y libera el cupo automáticamente."
+          }
+        },
+        {
+          "name": "DELETE Cancelar reserva ya cancelada (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Mensaje de error', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    console.log('Error esperado:', body.message);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/reservations/{{reservation_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Intento de doble cancelación\"\n}"
+            },
+            "description": "Intenta cancelar una reserva ya cancelada — debe retornar 400."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Flujo completo con datos del seed",
+      "item": [
+        {
+          "name": "GET Ventanas disponibles RM Sur",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/windows?zoneId=z-rm-sur&from=2026-02-01&to=2026-02-07",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "windows"
+              ],
+              "query": [
+                {
+                  "key": "zoneId",
+                  "value": "z-rm-sur"
+                },
+                {
+                  "key": "from",
+                  "value": "2026-02-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-02-07"
+                }
+              ]
+            },
+            "description": "RM Sur tiene wzc-03 con capacity_reserved=2/2 → AGOTADA.\nLos slots agotados igual aparecen con available=false."
+          }
+        },
+        {
+          "name": "POST Reservar ventana agotada (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 409 - ventana agotada', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/reservations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"or-01\",\n  \"windowZoneCapacityId\": \"wzc-03\"\n}"
+            },
+            "description": "wzc-03 está agotado (capacity_reserved=2, capacity_total=2).\nDebe retornar 409 WindowUnavailable."
+          }
+        },
+        {
+          "name": "GET Reserva del seed (or-01)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Reserva existe', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.orderId).to.eql('or-01');",
+                  "    pm.expect(body.status).to.eql('CONFIRMED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/reservations/by-order/or-01",
+            "description": "Consulta la reserva del seed (or-01 → r-01)."
+          }
+        }
+      ]
+    }
+  ]
+}

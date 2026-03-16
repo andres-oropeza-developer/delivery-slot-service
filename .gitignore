@@ -1,0 +1,5 @@
+/.idea/
+/target/
+/.claude/worktrees/upbeat-antonelli/
+/.mvn/
+/frontend/node_modules/

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Reservar despacho — Walmart Despacho</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <div class="header-brand">
+            <div class="walmart-logo">
+                <span class="spark">&#10022;</span>
+                <span class="brand-text">Walmart</span>
+            </div>
+            <span class="header-sep">|</span>
+            <span class="header-sub">Despacho a domicilio</span>
+        </div>
+        <nav class="header-nav">
+            <a th:href="@{/}" class="nav-link">Inicio</a>
+        </nav>
+    </div>
+</header>
+
+<main class="main-content">
+<div class="booking-page">
+
+    <!-- Step indicator -->
+    <div class="stepper">
+        <div class="stepper-inner">
+            <div class="step" id="step-indicator-1">
+                <div class="step-dot step-dot-active">1</div>
+                <span class="step-label">Tu comuna</span>
+            </div>
+            <div class="step-line" id="line-1-2"></div>
+            <div class="step" id="step-indicator-2">
+                <div class="step-dot step-dot-inactive">2</div>
+                <span class="step-label">Fecha y horario</span>
+            </div>
+            <div class="step-line" id="line-2-3"></div>
+            <div class="step" id="step-indicator-3">
+                <div class="step-dot step-dot-inactive">3</div>
+                <span class="step-label">Tus datos</span>
+            </div>
+            <div class="step-line" id="line-3-4"></div>
+            <div class="step" id="step-indicator-4">
+                <div class="step-dot step-dot-inactive">4</div>
+                <span class="step-label">Confirmar</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="booking-body">
+
+        <!-- STEP 1: Commune search -->
+        <div class="booking-step" id="step-1">
+            <div class="step-header">
+                <h2>En que comuna recibes tu pedido?</h2>
+                <p>Escribe el nombre de tu comuna para encontrar las ventanas de despacho disponibles.</p>
+            </div>
+            <div class="commune-search-wrap">
+                <div class="input-wrap">
+                    <input type="text" id="commune-input" class="input-field"
+                           placeholder="Ej: Providencia, Las Condes, Maipu..."
+                           autocomplete="off"/>
+                    <div class="input-clear" id="commune-clear" style="display:none">x</div>
+                </div>
+                <div class="commune-suggestions" id="commune-suggestions"></div>
+            </div>
+            <div class="selected-commune-card" id="selected-commune-card" style="display:none">
+                <div class="selected-commune-info">
+                    <div>
+                        <p class="selected-commune-name" id="selected-commune-name"></p>
+                        <p class="selected-commune-zone" id="selected-commune-zone"></p>
+                    </div>
+                </div>
+                <button class="btn btn-ghost btn-sm" id="change-commune-btn">Cambiar</button>
+            </div>
+            <div class="step-actions" id="step1-actions" style="display:none">
+                <button class="btn btn-primary" id="step1-next-btn">Ver fechas disponibles</button>
+            </div>
+        </div>
+
+        <!-- STEP 2: Date and time -->
+        <div class="booking-step" id="step-2" style="display:none">
+            <div class="step-header">
+                <h2>Elige tu fecha y horario</h2>
+                <p>Ventanas disponibles para <strong id="step2-commune-label"></strong></p>
+            </div>
+            <div class="loading-slots" id="loading-slots">
+                <div class="skeleton-dates">
+                    <div class="skeleton-date"></div>
+                    <div class="skeleton-date"></div>
+                    <div class="skeleton-date"></div>
+                    <div class="skeleton-date"></div>
+                </div>
+                <div class="skeleton-slot"></div>
+                <div class="skeleton-slot"></div>
+            </div>
+            <div id="slots-container" style="display:none">
+                <div class="date-tabs" id="date-tabs"></div>
+                <div class="slots-list" id="slots-list"></div>
+                <div class="no-slots-msg" id="no-slots-msg" style="display:none">
+                    <p>No hay ventanas disponibles para esta zona en las proximas fechas.</p>
+                </div>
+                <div class="slot-unavailable-banner" id="slot-unavailable-banner" style="display:none">
+                    <div class="sub-banner-icon">&#9888;</div>
+                    <div>
+                        <p class="sub-banner-title">El horario que elegiste ya no tiene cupos</p>
+                        <p class="sub-banner-sub">Otro usuario reservó el último cupo mientras confirmabas. Elige otro horario disponible.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="step-actions">
+                <button class="btn btn-ghost" id="step2-back-btn">Cambiar comuna</button>
+            </div>
+        </div>
+
+        <!-- STEP 3: Customer data -->
+        <div class="booking-step" id="step-3" style="display:none">
+            <div class="step-header">
+                <h2>Ingresa tu direccion de entrega</h2>
+                <p>Completa los datos para coordinar tu despacho</p>
+            </div>
+            <div class="selected-slot-summary" id="step3-slot-summary"></div>
+            <div class="form-group">
+                <label class="form-label" for="customer-id">ID Cliente</label>
+                <input type="text" id="customer-id" class="input-field" placeholder="12345678-9" value="12345678-9"/>
+                <p class="form-hint">RUTs de prueba: 12345678-9 · 9876543-2 · 15678234-K</p>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="delivery-address">Direccion de entrega</label>
+                <input type="text" id="delivery-address" class="input-field"
+                       placeholder="Av. Providencia 456, Depto 3"/>
+            </div>
+            <div class="error-msg" id="step3-error" style="display:none"></div>
+            <div class="step-actions">
+                <button class="btn btn-ghost" id="step3-back-btn">Cambiar horario</button>
+                <button class="btn btn-primary" id="step3-next-btn">Continuar</button>
+            </div>
+        </div>
+
+        <!-- STEP 4: Confirmation -->
+        <div class="booking-step" id="step-4" style="display:none">
+            <div class="step-header">
+                <h2>Confirma tu despacho</h2>
+                <p>Revisa los detalles antes de reservar</p>
+            </div>
+            <div class="summary-card" id="summary-card"></div>
+            <div class="error-msg" id="step4-error" style="display:none"></div>
+            <div class="step-actions">
+                <button class="btn btn-ghost" id="step4-back-btn">Volver</button>
+                <button class="btn btn-primary btn-confirm" id="confirm-btn">Confirmar reserva</button>
+            </div>
+        </div>
+
+        <!-- STEP 5: Success -->
+        <div class="booking-step" id="step-5" style="display:none">
+            <div class="success-screen">
+                <div class="success-icon">&#10003;</div>
+                <h2 class="success-title">Reserva confirmada!</h2>
+                <p class="success-sub" id="success-subtitle"></p>
+                <div class="success-card" id="success-card"></div>
+                <button class="btn btn-primary" id="new-reservation-btn">Hacer otra reserva</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Hidden state -->
+<input type="hidden" id="selected-zone-id"/>
+<input type="hidden" id="selected-commune-id"/>
+<input type="hidden" id="selected-wzc-id"/>
+<input type="hidden" id="selected-date"/>
+<input type="hidden" id="selected-start-time"/>
+<input type="hidden" id="selected-end-time"/>
+<input type="hidden" id="selected-cost"/>
+<input type="hidden" id="created-order-id"/>
+</main>
+
+<footer class="footer">
+    <div class="footer-inner">
+        <p>&#169; 2026 Walmart Chile.</p>
+        <div class="footer-links">
+            <a th:href="@{/swagger-ui.html}" target="_blank">API Docs</a>
+        </div>
+    </div>
+</footer>
+
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

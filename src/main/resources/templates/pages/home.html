@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Inicio — Walmart Despacho</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <div class="header-brand">
+            <div class="walmart-logo">
+                <span class="spark">&#10022;</span>
+                <span class="brand-text">Walmart</span>
+            </div>
+            <span class="header-sep">|</span>
+            <span class="header-sub">Despacho a domicilio</span>
+        </div>
+        <nav class="header-nav">
+            <a th:href="@{/}" class="nav-link">Inicio</a>
+            <a th:href="@{/schedule-slot}" class="nav-link nav-link-primary">Reservar despacho</a>
+        </nav>
+    </div>
+</header>
+
+<main class="main-content">
+    <div class="page-home">
+
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-inner">
+                <div class="hero-badge">Despacho a domicilio</div>
+                <h1 class="hero-title">
+                    Elige cuando recibir<br/>tu pedido
+                </h1>
+                <p class="hero-sub">
+                    Selecciona tu comuna, elige la fecha y horario que mas te acomoda.<br/>
+                    Despachamos en toda la Region Metropolitana y principales ciudades del pais.
+                </p>
+                <a th:href="@{/schedule-slot}" class="btn btn-primary btn-lg">
+                    Agendar despacho
+                </a>
+            </div>
+            <div class="hero-visual">
+                <div class="delivery-card">
+                    <div class="delivery-card-icon">&#128230;</div>
+                    <div class="delivery-card-info">
+                        <p class="delivery-card-label">Proximo despacho disponible</p>
+                        <p class="delivery-card-date">Manana</p>
+                        <p class="delivery-card-time">09:00 - 11:00 hrs</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Steps -->
+        <section class="steps-section">
+            <div class="steps-inner">
+                <h2 class="steps-title">Como funciona?</h2>
+                <div class="steps-grid">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h3>Ingresa tu comuna</h3>
+                        <p>Escribe tu comuna de entrega y el sistema identifica tu zona de despacho automaticamente.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h3>Elige fecha y horario</h3>
+                        <p>Selecciona el dia y la franja horaria disponible que mejor se adapte a tu agenda.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h3>Confirma tu reserva</h3>
+                        <p>Revisa los detalles y confirma. Tu cupo queda reservado de inmediato.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="footer-inner">
+        <p>&#169; 2026 Walmart Chile.</p>
+        <div class="footer-links">
+            <a th:href="@{/swagger-ui.html}" target="_blank">API Docs</a>
+            <a th:href="@{/h2-console}" target="_blank">H2 Console</a>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
