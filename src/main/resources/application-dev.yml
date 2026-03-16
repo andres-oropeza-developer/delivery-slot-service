@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:deliveryslot;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  thymeleaf:
+    cache: false
+
+logging:
+  level:
+    com.walmart.deliveryslot: DEBUG
+    org.hibernate.orm.deprecation: ERROR
+    org.flywaydb: WARN

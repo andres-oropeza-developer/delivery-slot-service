@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${pageTitle != null ? pageTitle + ' — Walmart Despacho' : 'Walmart Despacho'}">Walmart Despacho</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+    <link rel="icon" th:href="@{/favicon.ico}" type="image/x-icon"/>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <div class="header-brand">
+            <div class="walmart-logo">
+                <span class="spark">&#10022;</span>
+                <span class="brand-text">Walmart</span>
+            </div>
+            <span class="header-sep">|</span>
+            <span class="header-sub">Despacho a domicilio</span>
+        </div>
+        <nav class="header-nav">
+            <a th:href="@{/}" class="nav-link">Inicio</a>
+            <a th:href="@{/reservar}" class="nav-link nav-link-primary">Reservar despacho</a>
+        </nav>
+    </div>
+</header>
+
+<main class="main-content" th:fragment="layout(content)">
+    <div th:replace="${content}"><!-- page content --></div>
+</main>
+
+<footer class="footer">
+    <div class="footer-inner">
+        <p>&#169; 2026 Walmart Chile. Todos los derechos reservados.</p>
+        <div class="footer-links">
+            <a th:href="@{/swagger-ui.html}" target="_blank">API Docs</a>
+            <a th:href="@{/h2-console}" target="_blank">H2 Console</a>
+        </div>
+    </div>
+</footer>
+
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>
