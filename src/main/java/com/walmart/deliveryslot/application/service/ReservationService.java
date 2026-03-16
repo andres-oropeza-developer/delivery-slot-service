@@ -30,35 +30,31 @@ public class ReservationService {
 
     @Transactional
     public ReservationResponse create(CreateReservationRequest request) {
+
         // 1. Verify order exists
         var order = orderRepository.findById(request.orderId())
                 .orElseThrow(() -> ResourceNotFoundException.order(request.orderId()));
 
-        // 2. Check order doesn't already have a reservation
+        // 2. Check order doesn't already have an active reservation
         reservationRepository.findByOrderId(order.id()).ifPresent(existing -> {
             if (!"CANCELLED".equals(existing.status())) {
                 throw new OrderAlreadyReservedException(order.id());
             }
         });
 
-        // 3. Acquire pessimistic lock on window_zone_capacity row
-        // This is the key concurrency guard — only one transaction can
-        // hold this lock at a time, preventing double-booking
+        // 3. Acquire pessimistic lock directly by wzc ID
+        // SELECT FOR UPDATE — solo una transaccion puede tener este lock a la vez
         WindowZoneCapacity wzc = wzcRepository
-                .findByWindowIdAndZoneIdWithLock(
-                        getWindowIdFromWzcId(request.windowZoneCapacityId()),
-                        getZoneIdFromWzcId(request.windowZoneCapacityId())
-                )
-                .orElseGet(() -> wzcRepository.findById(request.windowZoneCapacityId())
-                        .orElseThrow(() -> ResourceNotFoundException
-                                .windowZoneCapacity(request.windowZoneCapacityId())));
+                .findByIdWithLock(request.windowZoneCapacityId())
+                .orElseThrow(() -> ResourceNotFoundException
+                        .windowZoneCapacity(request.windowZoneCapacityId()));
 
-        // 4. Check availability
+        // 4. Check availability — dentro del lock
         if (!wzc.hasAvailability()) {
             throw WindowUnavailableException.noSlots(wzc.windowId(), wzc.zoneId());
         }
 
-        // 5. Decrement available slot
+        // 5. Decrement available slot — dentro del lock
         WindowZoneCapacity updated = new WindowZoneCapacity(
                 wzc.id(),
                 wzc.windowId(),
@@ -90,15 +86,13 @@ public class ReservationService {
                 .orElseThrow(() -> ResourceNotFoundException.reservation(reservationId));
 
         if ("CANCELLED".equals(reservation.status())) {
-            throw new IllegalStateException("La reserva ya está cancelada: " + reservationId);
+            throw new IllegalStateException("La reserva ya esta cancelada: " + reservationId);
         }
 
         // Release the slot back
         wzcRepository.findById(reservation.windowZoneCapacityId()).ifPresent(wzc -> {
             WindowZoneCapacity released = new WindowZoneCapacity(
-                    wzc.id(),
-                    wzc.windowId(),
-                    wzc.zoneId(),
+                    wzc.id(), wzc.windowId(), wzc.zoneId(),
                     wzc.capacityTotal(),
                     Math.max(0, wzc.capacityReserved() - 1)
             );
@@ -106,12 +100,9 @@ public class ReservationService {
         });
 
         Reservation cancelled = new Reservation(
-                reservation.id(),
-                reservation.orderId(),
-                reservation.windowZoneCapacityId(),
-                "CANCELLED",
-                reservation.reservedAt(),
-                LocalDateTime.now(),
+                reservation.id(), reservation.orderId(),
+                reservation.windowZoneCapacityId(), "CANCELLED",
+                reservation.reservedAt(), LocalDateTime.now(),
                 request != null ? request.reason() : null
         );
         Reservation saved = reservationRepository.save(cancelled);
@@ -134,8 +125,4 @@ public class ReservationService {
                 r.status(), r.reservedAt(), r.cancelledAt(), r.cancellationReason()
         );
     }
-
-    // Helper: when client passes wzc id directly, we look up by id
-    private String getWindowIdFromWzcId(String wzcId) { return wzcId; }
-    private String getZoneIdFromWzcId(String wzcId) { return wzcId; }
 }

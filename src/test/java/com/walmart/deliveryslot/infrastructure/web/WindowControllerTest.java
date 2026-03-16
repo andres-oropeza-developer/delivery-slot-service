@@ -44,9 +44,9 @@ class WindowControllerTest {
         when(windowService.listAvailable(any())).thenReturn(List.of(w));
 
         mockMvc.perform(get("/api/windows")
-                .param("zoneId", "z-rm-norte")
-                .param("from",   "2026-03-16")
-                .param("to",     "2026-03-21"))
+                        .param("zoneId", "z-rm-norte")
+                        .param("from",   "2026-03-16")
+                        .param("to",     "2026-03-21"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0].windowZoneCapacityId").value("wzc-01"))
@@ -61,16 +61,20 @@ class WindowControllerTest {
                 .thenThrow(ResourceNotFoundException.zone("zona-falsa"));
 
         mockMvc.perform(get("/api/windows")
-                .param("zoneId", "zona-falsa")
-                .param("from",   "2026-03-16")
-                .param("to",     "2026-03-21"))
+                        .param("zoneId", "zona-falsa")
+                        .param("from",   "2026-03-16")
+                        .param("to",     "2026-03-21"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     @DisplayName("GET /api/windows retorna 400 cuando faltan parámetros")
     void listAvailable_returns400_whenMissingParams() throws Exception {
-        mockMvc.perform(get("/api/windows"))
+        // 'from' es un LocalDate requerido — omitirlo siempre dispara
+        // MissingServletRequestParameterException → 400 Bad Request
+        mockMvc.perform(get("/api/windows")
+                        .param("zoneId", "z-rm-norte")
+                        .param("to", "2026-03-21"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -80,9 +84,9 @@ class WindowControllerTest {
         when(windowService.listAvailable(any())).thenReturn(List.of());
 
         mockMvc.perform(get("/api/windows")
-                .param("zoneId", "z-rm-norte")
-                .param("from",   "2026-03-16")
-                .param("to",     "2026-03-21"))
+                        .param("zoneId", "z-rm-norte")
+                        .param("from",   "2026-03-16")
+                        .param("to",     "2026-03-21"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(0));

@@ -46,19 +46,22 @@ class ReservationServiceTest {
     @BeforeEach
     void setUp() {
         order = new Order("or-01", "cu-01", "Av. Test 123", "c-005", "PENDING");
-        wzc = new WindowZoneCapacity("wzc-01", "dw-01", "z-rm-norte", 3, 1);
+        wzc   = new WindowZoneCapacity("wzc-01", "dw-01", "z-rm-norte", 3, 1);
 
         confirmedReservation = new Reservation(
                 "r-01", "or-01", "wzc-01", "CONFIRMED",
                 LocalDateTime.now(), null, null);
     }
 
+    // ── Nota: el servicio usa findByIdWithLock (SELECT FOR UPDATE) ──────────
+    // Los mocks deben apuntar a findByIdWithLock, no a findById
+
     @Test
     @DisplayName("crea reserva y decrementa capacidad disponible")
     void create_success_decrementsCapacity() {
         when(orderRepository.findById("or-01")).thenReturn(Optional.of(order));
         when(reservationRepository.findByOrderId("or-01")).thenReturn(Optional.empty());
-        when(wzcRepository.findById("wzc-01")).thenReturn(Optional.of(wzc));
+        when(wzcRepository.findByIdWithLock("wzc-01")).thenReturn(Optional.of(wzc));
         when(wzcRepository.save(any())).thenReturn(
                 new WindowZoneCapacity("wzc-01", "dw-01", "z-rm-norte", 3, 2));
         when(reservationRepository.save(any())).thenReturn(confirmedReservation);
@@ -69,7 +72,6 @@ class ReservationServiceTest {
         assertThat(result.status()).isEqualTo("CONFIRMED");
         assertThat(result.orderId()).isEqualTo("or-01");
 
-        // Verify capacity was decremented
         ArgumentCaptor<WindowZoneCapacity> captor =
                 ArgumentCaptor.forClass(WindowZoneCapacity.class);
         verify(wzcRepository).save(captor.capture());
@@ -84,7 +86,7 @@ class ReservationServiceTest {
 
         when(orderRepository.findById("or-01")).thenReturn(Optional.of(order));
         when(reservationRepository.findByOrderId("or-01")).thenReturn(Optional.empty());
-        when(wzcRepository.findById("wzc-01")).thenReturn(Optional.of(fullWzc));
+        when(wzcRepository.findByIdWithLock("wzc-01")).thenReturn(Optional.of(fullWzc));
 
         assertThatThrownBy(() -> reservationService.create(
                 new CreateReservationRequest("or-01", "wzc-01")))
@@ -104,6 +106,8 @@ class ReservationServiceTest {
         assertThatThrownBy(() -> reservationService.create(
                 new CreateReservationRequest("or-01", "wzc-01")))
                 .isInstanceOf(OrderAlreadyReservedException.class);
+
+        verify(wzcRepository, never()).findByIdWithLock(any());
     }
 
     @Test
@@ -116,7 +120,7 @@ class ReservationServiceTest {
         when(orderRepository.findById("or-01")).thenReturn(Optional.of(order));
         when(reservationRepository.findByOrderId("or-01"))
                 .thenReturn(Optional.of(cancelledReservation));
-        when(wzcRepository.findById("wzc-01")).thenReturn(Optional.of(wzc));
+        when(wzcRepository.findByIdWithLock("wzc-01")).thenReturn(Optional.of(wzc));
         when(wzcRepository.save(any())).thenReturn(wzc);
         when(reservationRepository.save(any())).thenReturn(confirmedReservation);
 
@@ -131,11 +135,11 @@ class ReservationServiceTest {
         when(reservationRepository.findById("r-01"))
                 .thenReturn(Optional.of(confirmedReservation));
         when(wzcRepository.findById("wzc-01")).thenReturn(Optional.of(wzc));
-        when(wzcRepository.save(any())).thenReturn(wzc);
 
         Reservation cancelledReservation = new Reservation(
                 "r-01", "or-01", "wzc-01", "CANCELLED",
                 confirmedReservation.reservedAt(), LocalDateTime.now(), "Cambio de planes");
+        when(wzcRepository.save(any())).thenReturn(wzc);
         when(reservationRepository.save(any())).thenReturn(cancelledReservation);
 
         ReservationResponse result = reservationService.cancel(
@@ -143,7 +147,6 @@ class ReservationServiceTest {
 
         assertThat(result.status()).isEqualTo("CANCELLED");
 
-        // Verify slot was released
         ArgumentCaptor<WindowZoneCapacity> captor =
                 ArgumentCaptor.forClass(WindowZoneCapacity.class);
         verify(wzcRepository).save(captor.capture());
@@ -156,8 +159,7 @@ class ReservationServiceTest {
         when(reservationRepository.findById("r-inexistente"))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> reservationService.cancel(
-                "r-inexistente", null))
+        assertThatThrownBy(() -> reservationService.cancel("r-inexistente", null))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 

@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -23,6 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/windows")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Delivery Windows", description = "Consulta de ventanas de despacho disponibles")
 public class WindowController {
 

@@ -186,6 +186,7 @@ $('step1-next-btn').addEventListener('click', async () => {
 async function loadWindows() {
   $('loading-slots').style.display = 'block';
   $('slots-container').style.display = 'none';
+  $('slot-unavailable-banner').style.display = 'none';
   $('step2-commune-label').textContent = state.commune.name;
 
   const from = new Date(); from.setDate(from.getDate() + 1);
@@ -390,7 +391,34 @@ $('confirm-btn').addEventListener('click', async () => {
     goToStep(5);
     renderSuccess();
   } catch (e) {
-    showError('step4-error', e.message);
+    // Si el cupo se agotó mientras el usuario confirmaba, volver al paso 2
+    // para que elija otro horario — la orden se reutiliza en el siguiente intento
+    const isUnavailable = e.message &&
+      (e.message.toLowerCase().includes('agotad') ||
+       e.message.toLowerCase().includes('unavailable') ||
+       e.message.toLowerCase().includes('cupo') ||
+       e.message.toLowerCase().includes('capacidad'));
+
+    if (isUnavailable) {
+      // Limpiar selección de ventana pero mantener orden y comuna
+      state.selectedWindow = null;
+      $('selected-wzc-id').value = '';
+      $('selected-date').value = '';
+
+      // Recargar ventanas para reflejar disponibilidad actualizada
+      await loadWindows();
+
+      // Mostrar banner de aviso en step 2 y navegar
+      goToStep(2);
+      $('slot-unavailable-banner').style.display = 'flex';
+
+      // Ocultar banner después de 8 segundos
+      setTimeout(() => {
+        $('slot-unavailable-banner').style.display = 'none';
+      }, 8000);
+    } else {
+      showError('step4-error', e.message);
+    }
   } finally {
     $('confirm-btn').disabled = false;
     $('confirm-btn').textContent = 'Confirmar reserva';
