@@ -19,6 +19,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Servicio de aplicación para la gestión de reservas de ventanas de despacho.
+ * <p>
+ * Implementa pessimistic locking (SELECT FOR UPDATE) para garantizar que no se
+ * puedan crear reservas duplicadas ni exceder la capacidad disponible bajo concurrencia.
+ * Una orden solo puede tener una reserva activa a la vez.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -28,6 +35,17 @@ public class ReservationService {
     private final WindowZoneCapacityRepository wzcRepository;
     private final OrderRepository orderRepository;
 
+    /**
+     * Crea una reserva para una orden en la ventana/zona indicada.
+     * <p>
+     * Adquiere un lock pesimista sobre la capacidad para evitar sobre-reservas.
+     *
+     * @param request ID de la orden y ID de la ventana/zona
+     * @return respuesta con la reserva creada en estado CONFIRMED
+     * @throws ResourceNotFoundException     si la orden o la ventana/zona no existen
+     * @throws OrderAlreadyReservedException si la orden ya tiene una reserva activa
+     * @throws WindowUnavailableException    si la ventana está agotada
+     */
     @Transactional
     public ReservationResponse create(CreateReservationRequest request) {
 
@@ -80,6 +98,15 @@ public class ReservationService {
         return toResponse(saved);
     }
 
+    /**
+     * Cancela una reserva activa y libera el cupo para otros usuarios.
+     *
+     * @param reservationId ID de la reserva a cancelar
+     * @param request       motivo de cancelación (opcional)
+     * @return respuesta con la reserva en estado CANCELLED
+     * @throws ResourceNotFoundException si la reserva no existe
+     * @throws IllegalStateException     si la reserva ya estaba cancelada
+     */
     @Transactional
     public ReservationResponse cancel(String reservationId, CancelReservationRequest request) {
         Reservation reservation = reservationRepository.findById(reservationId)
@@ -111,6 +138,13 @@ public class ReservationService {
         return toResponse(saved);
     }
 
+    /**
+     * Obtiene la reserva asociada a una orden.
+     *
+     * @param orderId ID de la orden
+     * @return respuesta con los datos de la reserva
+     * @throws ResourceNotFoundException si no existe reserva para la orden indicada
+     */
     @Transactional(readOnly = true)
     public ReservationResponse findByOrderId(String orderId) {
         return reservationRepository.findByOrderId(orderId)

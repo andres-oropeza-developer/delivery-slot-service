@@ -15,30 +15,40 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Manejador global de excepciones para la API REST.
+ * <p>
+ * Centraliza la transformación de excepciones de dominio y validación en respuestas
+ * HTTP con códigos de estado semánticos y mensajes estructurados.
+ */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleNotFound(ResourceNotFoundException ex) {
+        log.warn("Recurso no encontrado: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiErrorResponse(404, "Not Found", ex.getMessage()));
     }
 
     @ExceptionHandler(WindowUnavailableException.class)
     public ResponseEntity<ApiErrorResponse> handleWindowUnavailable(WindowUnavailableException ex) {
+        log.warn("Ventana sin disponibilidad: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ApiErrorResponse(409, "Conflict", ex.getMessage()));
     }
 
     @ExceptionHandler(OrderAlreadyReservedException.class)
     public ResponseEntity<ApiErrorResponse> handleAlreadyReserved(OrderAlreadyReservedException ex) {
+        log.warn("Reserva duplicada: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ApiErrorResponse(409, "Conflict", ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiErrorResponse> handleIllegalState(IllegalStateException ex) {
+        log.warn("Estado inválido: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiErrorResponse(400, "Bad Request", ex.getMessage()));
     }

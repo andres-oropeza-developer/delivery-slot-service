@@ -32,7 +32,7 @@ chmod +x start.sh && ./start.sh
 | URL | Descripción |
 |---|---|
 | `http://localhost:8080` | Frontend — flujo de reserva |
-| `http://localhost:8080/reservar` | Página de reserva directa |
+| `http://localhost:8080/schedule-slot` | Página de reserva directa |
 | `http://localhost:8080/swagger-ui.html` | Documentación interactiva de la API |
 | `http://localhost:8080/api-docs` | OpenAPI 3 en formato JSON |
 | `http://localhost:8080/h2-console` | Consola H2 — ver tablas y datos |

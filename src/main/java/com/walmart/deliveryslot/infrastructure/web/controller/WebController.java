@@ -13,7 +13,7 @@ public class WebController {
         return "pages/home";
     }
 
-    @GetMapping("/reservar")
+    @GetMapping("/schedule-slot")
     public String booking(Model model) {
         model.addAttribute("pageTitle", "Reservar despacho");
         return "pages/booking";

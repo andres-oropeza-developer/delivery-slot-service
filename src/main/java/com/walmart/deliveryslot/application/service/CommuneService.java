@@ -13,6 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Servicio de aplicación para consulta de comunas.
+ * <p>
+ * Permite buscar comunas por nombre (autocomplete) y obtener el detalle por ID.
+ * Enriquece la respuesta con el nombre de zona y región.
+ */
 @Service
 @RequiredArgsConstructor
 public class CommuneService {
@@ -21,6 +27,12 @@ public class CommuneService {
     private final ZoneRepository zoneRepository;
     private final CommuneJpaRepository communeJpaRepository;
 
+    /**
+     * Busca comunas cuyo nombre contenga el texto indicado (mínimo 2 caracteres).
+     *
+     * @param query texto de búsqueda (case-insensitive)
+     * @return lista de comunas coincidentes, vacía si el query es menor a 2 caracteres
+     */
     @Transactional(readOnly = true)
     public List<CommuneResponse> search(String query) {
         if (query == null || query.trim().length() < 2) {
@@ -32,6 +44,13 @@ public class CommuneService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Obtiene el detalle de una comuna por su identificador.
+     *
+     * @param id identificador único de la comuna
+     * @return respuesta con nombre, zona y región
+     * @throws ResourceNotFoundException si la comuna no existe
+     */
     @Transactional(readOnly = true)
     public CommuneResponse findById(String id) {
         Commune commune = communeRepository.findById(id)

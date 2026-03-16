@@ -9,6 +9,7 @@ import com.walmart.deliveryslot.domain.repository.DeliveryWindowRepository;
 import com.walmart.deliveryslot.domain.repository.WindowZoneCapacityRepository;
 import com.walmart.deliveryslot.domain.repository.ZoneRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,13 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Servicio de aplicación para consulta de ventanas de despacho disponibles.
+ * <p>
+ * Usa batch loading para evitar el problema N+1: carga todas las ventanas
+ * en una sola query y construye el resultado en memoria.
+ */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WindowService {
@@ -25,6 +33,15 @@ public class WindowService {
     private final DeliveryWindowRepository windowRepository;
     private final ZoneRepository zoneRepository;
 
+    /**
+     * Lista las ventanas de despacho disponibles para una zona y rango de fechas.
+     * <p>
+     * Solo retorna ventanas activas con capacidad disponible, ordenadas por fecha y hora.
+     *
+     * @param request zona, fecha inicio y fecha fin de búsqueda
+     * @return lista de ventanas disponibles ordenadas cronológicamente
+     * @throws ResourceNotFoundException si la zona no existe o está inactiva
+     */
     @Transactional(readOnly = true)
     public List<WindowResponse> listAvailable(ListWindowsRequest request) {
         zoneRepository.findById(request.zoneId())
@@ -40,7 +57,7 @@ public class WindowService {
                 .stream()
                 .collect(Collectors.toMap(DeliveryWindow::id, Function.identity()));
 
-        return capacities.stream()
+        List<WindowResponse> result = capacities.stream()
                 .filter(wzc -> windowsById.containsKey(wzc.windowId()))
                 .map(wzc -> {
                     DeliveryWindow window = windowsById.get(wzc.windowId());
@@ -61,5 +78,9 @@ public class WindowService {
                     return dateCompare != 0 ? dateCompare : a.startTime().compareTo(b.startTime());
                 })
                 .collect(Collectors.toList());
+
+        log.info("Ventanas disponibles para zona {}: {} resultado(s) entre {} y {}",
+                request.zoneId(), result.size(), request.from(), request.to());
+        return result;
     }
 }
