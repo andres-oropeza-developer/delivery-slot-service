@@ -5,7 +5,6 @@ import com.walmart.deliveryslot.application.exception.ResourceNotFoundException;
 import com.walmart.deliveryslot.application.service.WindowService;
 import com.walmart.deliveryslot.config.JacksonConfig;
 import com.walmart.deliveryslot.infrastructure.web.controller.WindowController;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
