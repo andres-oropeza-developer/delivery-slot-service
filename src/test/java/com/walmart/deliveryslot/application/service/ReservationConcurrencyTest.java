@@ -50,7 +50,7 @@ class ReservationConcurrencyTest {
         // ── Crear una orden por thread ──────────────────────────────
         String communeId = jdbcTemplate.queryForObject(
             "SELECT id FROM commune LIMIT 1", String.class);
-        String[] customers = {"cu-01", "cu-02", "cu-03"};
+        String[] customers = {"12345678-9", "9876543-2", "15678234-K"};
 
         int THREAD_COUNT = 5;
         List<String> orderIds = new ArrayList<>();

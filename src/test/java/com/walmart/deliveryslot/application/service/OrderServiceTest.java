@@ -51,7 +51,7 @@ class OrderServiceTest {
         when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         OrderResponse result = orderService.create(
-                new CreateOrderRequest("cu-01", "Av. Providencia 456", "c-013"));
+                new CreateOrderRequest("12345678-9", "Av. Providencia 456", "c-013"));
 
         assertThat(result).isNotNull();
         assertThat(result.communeId()).isEqualTo("c-013");
@@ -69,7 +69,7 @@ class OrderServiceTest {
         ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
         when(orderRepository.save(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
 
-        orderService.create(new CreateOrderRequest("cu-01", "Dirección 123", "c-013"));
+        orderService.create(new CreateOrderRequest("12345678-9", "Dirección 123", "c-013"));
 
         assertThat(captor.getValue().status()).isEqualTo("PENDING");
     }
@@ -81,8 +81,8 @@ class OrderServiceTest {
         when(zoneRepository.findById("z-rm-oriente")).thenReturn(Optional.of(zone));
         when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        OrderResponse r1 = orderService.create(new CreateOrderRequest("cu-01", "Dir 1", "c-013"));
-        OrderResponse r2 = orderService.create(new CreateOrderRequest("cu-02", "Dir 2", "c-013"));
+        OrderResponse r1 = orderService.create(new CreateOrderRequest("12345678-9", "Dir 1", "c-013"));
+        OrderResponse r2 = orderService.create(new CreateOrderRequest("9876543-2", "Dir 2", "c-013"));
 
         assertThat(r1.id()).isNotEqualTo(r2.id());
     }
@@ -93,7 +93,7 @@ class OrderServiceTest {
         when(communeRepository.findById("c-999")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderService.create(
-                new CreateOrderRequest("cu-01", "Dirección 123", "c-999")))
+                new CreateOrderRequest("12345678-9", "Dirección 123", "c-999")))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("c-999");
 
@@ -107,14 +107,14 @@ class OrderServiceTest {
         when(zoneRepository.findById("z-rm-oriente")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderService.create(
-                new CreateOrderRequest("cu-01", "Dirección 123", "c-013")))
+                new CreateOrderRequest("12345678-9", "Dirección 123", "c-013")))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
     @DisplayName("findById retorna la orden con nombre de zona")
     void findById_returnsOrderWithZoneName() {
-        Order order = new Order("or-01", "cu-01", "Av. Test 123", "c-013", "CONFIRMED");
+        Order order = new Order("or-01", "12345678-9", "Av. Test 123", "c-013", "CONFIRMED");
         when(orderRepository.findById("or-01")).thenReturn(Optional.of(order));
         when(communeRepository.findById("c-013")).thenReturn(Optional.of(commune));
         when(zoneRepository.findById("z-rm-oriente")).thenReturn(Optional.of(zone));

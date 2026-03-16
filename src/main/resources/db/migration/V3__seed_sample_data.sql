@@ -6,9 +6,9 @@
 
 -- ── Customers con IDs fijos conocidos ────────────────────────
 INSERT INTO customer (id, name, email, phone) VALUES
-    ('cu-01', 'Maria Gonzalez',  'maria.gonzalez@gmail.com',  '+56912345678'),
-    ('cu-02', 'Carlos Munoz',    'c.munoz@outlook.com',       '+56987654321'),
-    ('cu-03', 'Ana Perez',       'ana.perez@empresa.cl',      '+56955544433');
+    ('12345678-9', 'María González',  'maria.gonzalez@gmail.com',  '+56912345678'),
+    ('9876543-2', 'Carlos Muñoz',    'c.munoz@outlook.com',       '+56987654321'),
+    ('15678234-K', 'Ana Pérez',       'ana.perez@empresa.cl',      '+56955544433');
 
 -- ── Delivery windows ─────────────────────────────────────────
 INSERT INTO delivery_window (id, delivery_date, start_time, end_time, capacity_total, cost, active, version) VALUES
